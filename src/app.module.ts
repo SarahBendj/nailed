@@ -6,13 +6,13 @@ import { AuthController } from './auth/auth.controller';
 import { AuthModule } from './auth/auth.module';
 import { ServiceController } from './service/service.controller';
 import { ServiceModule } from './service/service.module';
-import { AvailibilityService } from './availibility/availibility.service';
-import { AvailibilityController } from './availibility/availibility.controller';
-import { AvailibilityModule } from './availibility/availibility.module';
+import { AvailabilityController } from './availability/availability.controller';
+import { AvailabilityService } from './availability/availability.service';
+import { AvailabilityModule } from './availability/availability.module';
 
 @Module({
-  imports: [UsersModule, AuthModule, ServiceModule, AvailibilityModule],
-  controllers: [AppController, AuthController, ServiceController, AvailibilityController],
-  providers: [AppService, AvailibilityService],
+  imports: [UsersModule, AuthModule, ServiceModule, AvailabilityModule, AvailabilityModule],
+  controllers: [AppController, AuthController, ServiceController, AvailabilityController, AvailabilityController],
+  providers: [AppService, AvailabilityService, AvailabilityService],
 })
 export class AppModule {}

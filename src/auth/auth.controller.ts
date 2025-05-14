@@ -1,6 +1,6 @@
 import { Body, Controller,  Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { logoutDto, SignInDto, SignUpDto } from './dto/sign.user.dto';
+import { logoutDto, SignInDto, SignUpDto, SO_SignUpDto } from './dto/sign.user.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -26,10 +26,22 @@ export class AuthController {
             return {
                 access_token: ExistingUser.access_token,
             }
-        }
-        
+        }  
      
     }
+
+    @Post('salonowner/signup')
+    async salonOwnerRegister(@Body() body: SO_SignUpDto) {
+        if (!body) {
+            return {
+                message: 'all columns are required'
+            }
+        }
+        const response = await this.authService.registerforSalonOwner(body);
+        return {
+            response
+    }
+}
     @Post('signup')
     async register(@Body() body: SignUpDto) {
         const { email, password, name , role } = body;

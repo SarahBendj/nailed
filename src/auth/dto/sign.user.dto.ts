@@ -1,4 +1,4 @@
-import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 
 
 export class SignInDto {
@@ -33,4 +33,54 @@ export class logoutDto {
     @IsString()
     token: string;
 }
+
+//*SALON OWNER  DTO
+
+export class SO_SignUpDto {
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @IsNotEmpty()
+  @IsString()
+  password: string;
+
+  @IsNotEmpty()
+  @IsString()
+  role: string;
+
+  @IsNotEmpty()
+  @IsString()
+  salon_name: string;
+
+  @IsNotEmpty()
+  @IsString()
+  address: string;
+
+  @IsOptional()
+  @IsNumber({}, { message: 'Latitude must be a number' })
+  latitude?: number;
+
+  @IsOptional()
+  @IsNumber({}, { message: 'Longitude must be a number' })
+  longitude?: number;
+
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+
+  @IsOptional()
+  @IsNumber()
+  user_id?: number;
+}
+
 

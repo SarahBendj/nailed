@@ -2,9 +2,11 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { User } from 'src/models/user.model';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { SignInDto, SignUpDto } from './dto/sign.user.dto';
+import { SignInDto, SignUpDto, SO_SignUpDto } from './dto/sign.user.dto';
 import { Token } from 'src/models/token.model';
 import { access } from 'fs';
+import { Salon } from 'src/models/salon.model';
+import { DB } from 'src/database/db';
 
 @Injectable()
 export class AuthService {
@@ -75,9 +77,56 @@ export class AuthService {
       return { message: 'Logout successful' };
      
     }
-
  
-    throw new BadRequestException('Token not found');
+     throw new BadRequestException('Token not found');
 
+    }
+
+   async registerforSalonOwner(salonOwner: SO_SignUpDto) {
+  console.log('salonOwner', salonOwner);
+
+  const existingUser = await User.findbyEmail(salonOwner.email);
+  if (existingUser) {
+    throw new BadRequestException('Email already exists');
+  }
+
+  const hashedPassword = await bcrypt.hash(salonOwner.password, 10);
+
+  await DB.query('BEGIN');
+  try {
+
+  const newUser : any = await User.Create({
+    name: salonOwner.name,
+    email: salonOwner.email,
+    role: salonOwner.role,
+    password: hashedPassword,
+  });
+
+  const newSalon : any = await Salon.Create({
+    name : salonOwner.salon_name,
+    address: salonOwner.address,
+    latitude: salonOwner.latitude,
+    longitude: salonOwner.longitude,
+    phone: salonOwner.phone,
+    description: salonOwner.description,
+    user_id: newUser.id,
+  });
+   await DB.query('COMMIT');
+   return {
+    message: 'Salon owner registered successfully',
+    userId: newUser.id,
+    salonId: newSalon.id,
+  };
+  } catch (error) {
+    await DB.query('ROLLBACK');
+    console.error('Error during transaction:', error);
+    throw new BadRequestException('Transaction failed');
+  } finally {
+    await DB.query('ROLLBACK');
+  }
+
+  
 }
-}
+
+  }
+
