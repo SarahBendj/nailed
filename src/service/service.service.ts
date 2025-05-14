@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { Service } from 'src/models/service.model';
+import { CreateServiceDto, UpdateServiceDto } from './dto/create.service';
 
 @Injectable()
 export class ServiceService {
@@ -22,28 +23,46 @@ export class ServiceService {
         return service;
     }
 //       return null;
-    async createService(service: any) {
+    async createService(service: CreateServiceDto) {
         if (!service) {
-            throw new Error('Service data is required');
+            throw new BadRequestException('Service data is required');
         }
         const newService = await Service.Create(service);
+        if (!newService) {
+            throw new BadRequestException('Failed to create service');
+        }
         return newService;
     }
-    async updateService(id: number, service: any) {
+    async updateService(id: number, service: UpdateServiceDto) {
         if (!id) {
             throw new Error('Service ID is required');
         }
         if (!service) {
             throw new Error('Service data is required');
         }
+        const existingService = await Service.findOne(id);
+        if (!existingService) {
+            throw new BadRequestException('Service not found');
+        }
         const updatedService = await Service.Update(id, service);
+        if(!updatedService) {
+            throw new BadRequestException('Failed to update service');
+        }
         return updatedService;
     }
     async deleteService(id: number) {
         if (!id) {
             throw new Error('Service ID is required');
         }
+        const existingService = await Service.findOne(id);
+        if (!existingService) {
+            throw new BadRequestException('Service not found');
+        }
+        // Check if the service is already deleted
         const deletedService = await Service.Delete(id);
+        if(!deletedService) {
+            throw new BadRequestException('Failed to delete service');
+        } 
         return deletedService;
     }
 }

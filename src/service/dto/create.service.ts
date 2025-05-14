@@ -11,7 +11,7 @@ export class CreateServiceDto {
     @IsNotEmpty ()
     price: string
 
-    @IsString()   
+    @IsNumber()   
     @IsNotEmpty ()
     duration: string
 
@@ -20,9 +20,6 @@ export class CreateServiceDto {
   
 }
 
-export class UpdateServiceDto  extends  PartialType(CreateServiceDto) {
-    @IsNumber()
-    @IsNotEmpty()
-    id: number
+export class UpdateServiceDto  extends  PartialType(CreateServiceDto) {n
 }
 
