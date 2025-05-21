@@ -29,31 +29,42 @@ async getAllAvailabilities() {
 }
 
 
-   async getAvailabilityByGuessingName(salonName: string) {
-  // If no salon name is provided, return all availabilities
-//   const allSalons = await Availability.findAll();
+  async getAvailabilityByGuessingName(salonName: string) {
+  const availabilityList = await Availability.findByName(salonName);
 
-//   if (!salonName) {
-//     return {
-//       message: 'All availabilities retrieved successfully',
-//       availabilities: allSalons,
-//     };
-  
-
-  const availability = await Availability.findByName( salonName); 
-
-  if (!availability) {
+  if (!availabilityList || availabilityList.length === 0) {
     return {
-      message: 'No specific availability found. Returning all.',
-      availabilities: [],
+      message: 'No availability found for the given salon name.',
+      results: [],
     };
   }
 
+  // Step 1: Group availabilities by salon_id
+  const grouped = new Map<number, any[]>() ;
+
+ for (const a of availabilityList) {
+  if (!grouped.has(a.salon_id)) {
+    grouped.set(a.salon_id, []);
+  }
+
+  const arr = grouped.get(a.salon_id);
+  arr?.push(a); 
+}
+
+  const salonIds = Array.from(grouped.keys());
+  const salonFetches = await Promise.all(salonIds.map(id => Salon.findOne(id)));
+
+
+  const availability = salonFetches.map(salon => ({
+    salon,
+    availabilities: grouped.get(salon.id) || [],
+  }));
+
   return {
-    message: 'Availability retrieved successfully',
+    message: 'Availabilities grouped by salon',
     availability,
   };
-  }
+}
 
 async createAvailability(group: AvailabilityGroupDto) {
   const { salon_id, sequence, availability } = group;
@@ -89,9 +100,5 @@ async createAvailability(group: AvailabilityGroupDto) {
     availability: created,
   };
 }
-
-
-
-
 
 }

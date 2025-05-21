@@ -13,17 +13,21 @@ export class AvailabilityController {
         return {
             message: 'All availabilities retrieved successfully',
             availabilities,
+            
         };
     }
 
     
   @Get('search')
   async getAvailabilityByGuessingName(@Query('salonName') salonName: string) {
-    const availability = await this.availabilityService.getAvailabilityByGuessingName(salonName);
+    const response = await this.availabilityService.getAvailabilityByGuessingName(salonName);
+
+
 
     return {
       message: 'Availability retrieved successfully',
-      availability,
+      matchedSalons : response.availability,
+   
     };
   }
 

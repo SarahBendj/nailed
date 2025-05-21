@@ -8,15 +8,18 @@ export class Availability extends Core {
     static tableName = 'availability';
 
     static async findByName(salonName: string) { 
+       
         try {
+
             const sqlQuery = `
-                    SELECT a.*
+                    SELECT a.* 
                     FROM ${this.tableName} AS a
                     JOIN ${owner} ON ${owner}.id = a.salon_id
                     WHERE ${owner}.name LIKE '%' || $1 || '%'
         `;   
+    
             const result = await DB.query(sqlQuery, [salonName]);
-            return result;  
+            return result.rows  
 
             
         } catch (error) {
