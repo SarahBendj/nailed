@@ -12,10 +12,13 @@ import { AvailabilityModule } from './availability/availability.module';
 import { SalonController } from './salon/salon.controller';
 import { SalonService } from './salon/salon.service';
 import { SalonModule } from './salon/salon.module';
+import { ImagesController } from './images/images.controller';
+import { ImagesService } from './images/images.service';
+import { ImagesModule } from './images/images.module';
 
 @Module({
-  imports: [UsersModule, AuthModule, ServiceModule, AvailabilityModule, AvailabilityModule, SalonModule],
-  controllers: [AppController, AuthController, ServiceController, AvailabilityController, AvailabilityController, SalonController],
-  providers: [AppService, AvailabilityService, AvailabilityService, SalonService],
+  imports: [UsersModule, AuthModule, ServiceModule, AvailabilityModule, AvailabilityModule, SalonModule, ImagesModule],
+  controllers: [AppController, AuthController, ServiceController, AvailabilityController, AvailabilityController, SalonController, ImagesController],
+  providers: [AppService, AvailabilityService, AvailabilityService, SalonService, ImagesService],
 })
 export class AppModule {}

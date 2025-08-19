@@ -36,9 +36,50 @@ export class SalonService {
         console.log('nearestSalons', nearestSalons);
         return nearestSalons;
 
+    }
 
-    
 
+    async desactivateSalon(id: number) {
+        const salon = await Salon.findOne(id);  
+        if (!salon) {
+            return {
+                message: 'No salon found for the given id.',
+                results: [],
+            };
+        }
+        const desactivatedSalon = await Salon.desactivate(id);
+        if (!desactivatedSalon) {
+            return {
+                message: 'Error desactivating the salon.',
+                results: [],
+            };
+        }
+        return desactivatedSalon;
+    }
+
+    async deleteSalon(id: number , password: string) { 
+        const salon = await Salon.findOne(id);
+        if (!salon) {
+            return {
+                message: 'No salon found for the given id.',
+                results: [],
+            };
+        }
+        // const matchedPassword = await bcrypt.compare(password, salon.password);
+        // if (!matchedPassword) {
+        //     return {
+        //         message: 'Password does not match.',
+        //         results: [],
+        //     };
+        // }
+        const deletedSalon = await Salon.Delete(id);
+        if (!deletedSalon) {
+            return {
+                message: 'Error deleting the salon.',
+                results: [],
+            };
+        }
+        return deletedSalon;    
     }
 
 }

@@ -1,11 +1,15 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Query } from '@nestjs/common';
 import { SalonService } from './salon.service';
+import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
 
+@ApiTags('salons')
 @Controller('salon')
 export class SalonController {
     constructor(private readonly salonService: SalonService){}
 
     @Get()
+    @ApiOperation({ summary: 'Get all salons' })
+
     async getAllSalons() {
         const salons = await this.salonService.getAllSalons();
         return {
@@ -15,6 +19,10 @@ export class SalonController {
     }
   
     @Get('nearest')
+    @ApiOperation({ summary: 'Get nearest salons' })
+    @ApiQuery({ name: 'latitude', required: true, type: Number })
+    @ApiQuery({ name: 'longitude', required: true, type: Number })
+    @ApiQuery({ name: 'distance', required: true, type: Number })
     async nearestSalons(@Query('latitude') latitude: number, @Query('longitude') longitude: number, @Query('distance') distance: number) {
         if (!latitude || !longitude || !distance) {
             return {
@@ -29,6 +37,8 @@ export class SalonController {
     }
 
       @Get(':id')
+      @ApiOperation({ summary: 'Get salon by ID' })
+      @ApiQuery({ name: 'id', required: true, type: Number })
     async getSalonById(@Param('id') id: number) {
         if (!id) {
             return {
@@ -40,5 +50,39 @@ export class SalonController {
             message: 'Salon retrieved successfully',
             salon,
         };
+
     }
+    @Patch('desactivate/:id')
+    async desactivateSalon(@Param('id') id: number) {
+        if (!id) {
+            return {
+                message: 'Salon ID is required' 
+            }
+        }
+        const salon = await this.salonService.desactivateSalon(id);
+        return {
+            message: 'Salon desactivated successfully',
+            salon,
+        };
+    }
+
+    @Delete(':id')
+    async deleteSalon(@Param('id') id: number , @Body() password: string) {
+        if (!password) { 
+            return {
+                message: 'Password is required'
+            }
+        }
+        if (!id) {
+            return {
+                message: 'Salon ID is required'
+            }
+        }
+        const salon = await this.salonService.deleteSalon(id, password)  
+          return {
+            message: 'Salon deleted successfully',
+            salon,
+        };
+    }
+    
 }

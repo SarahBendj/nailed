@@ -2,11 +2,11 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { User } from 'src/models/user.model';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
-import { SignInDto, SignUpDto, SO_SignUpDto } from './dto/sign.user.dto';
+import { SignInDto, SignUpDto, SO_SignUpDto , updatePasswordDto } from './dto/sign.user.dto';
 import { Token } from 'src/models/token.model';
-import { access } from 'fs';
 import { Salon } from 'src/models/salon.model';
 import { DB } from 'src/database/db';
+import { NewUserMailing } from 'utility/mailing.newUser';
 
 @Injectable()
 export class AuthService {
@@ -22,7 +22,7 @@ export class AuthService {
       return null;
     }
 
-    const isHashed = user.password.startsWith('$2b$'); // bcrypt hash always starts with $2b$ or $2a$
+    const isHashed = user.password.startsWith('$2b$'); 
 
     // Si le mot de passe est encore en clair (ancien compte ?)
     if (!isHashed) {
@@ -65,8 +65,40 @@ export class AuthService {
    
     const hashedPassword = await bcrypt.hash(user.password, 10);
     const newUser = await User.Create({ ...user, password: hashedPassword });
+
+    //*NOTIFY USER BY EMAIL
+    const EMAILED = await NewUserMailing.sendNewUserEmail(newUser.email, newUser.name);
+    console.log('EMAILED', EMAILED);
+    // If email sending fails, throw an error
+    console.log('newUser', newUser);
+    if (!EMAILED) {
+      throw new BadRequestException('Failed to send welcome email');
+    }
     return `User created successfully with ID: ${newUser.name}`;
   }
+
+  async updatePassword(id: number, data: updatePasswordDto) {
+    const existingUser = await User.findbyEmail(data.email);
+    if (!existingUser ) {
+      throw new BadRequestException('User does not exist');  
+    }
+    const NewPwd = await bcrypt.hash(data.password, 10);
+
+    const updatedUser = await User.Update(id, {
+      password: NewPwd,
+    });
+    if (!updatedUser) {
+      throw new BadRequestException('Failed to update password');
+    }
+
+    if (updatedUser) {
+      return {
+        message: 'Password updated successfully',
+        user: updatedUser,
+      };
+    }
+  }
+
   async logout(used_token: string) {
     
     const token = await Token.findByConsumerId(used_token);
