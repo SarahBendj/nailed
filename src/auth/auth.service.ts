@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Inject, Injectable } from '@nestjs/common';
 import { User } from 'src/models/user.model';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
@@ -6,11 +6,15 @@ import { SignInDto, SignUpDto, SO_SignUpDto , updatePasswordDto } from './dto/si
 import { Token } from 'src/models/token.model';
 import { Salon } from 'src/models/salon.model';
 import { DB } from 'src/database/db';
-import { NewUserMailing } from 'utility/mailing.newUser';
+import { NewUserMailing } from 'utility/mailing/newUser.client';
+import Redis from 'ioredis';
 
 @Injectable()
 export class AuthService {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly newUserMailing: NewUserMailing,
+  @Inject('REDIS_CLIENT') private readonly redisClient: Redis,) {}
 
   async validateUser(email: string, password: string): Promise<any> {
     if (!email || !password) {
@@ -67,15 +71,39 @@ export class AuthService {
     const newUser = await User.Create({ ...user, password: hashedPassword });
 
     //*NOTIFY USER BY EMAIL
-    const EMAILED = await NewUserMailing.sendNewUserEmail(newUser.email, newUser.name);
-    console.log('EMAILED', EMAILED);
-    // If email sending fails, throw an error
-    console.log('newUser', newUser);
+    const EMAILED = await this.newUserMailing.sendToClient(newUser.email, newUser.name);
     if (!EMAILED) {
       throw new BadRequestException('Failed to send welcome email');
     }
     return `User created successfully with ID: ${newUser.name}`;
   }
+
+  async consentToTerms(email: string , otp : string): Promise<string> {
+    const user = await User.findbyEmail(email);
+    if (!user) {
+      throw new BadRequestException('User not found');
+    }
+    //*check in redis
+        // 2. Check OTP from Redis
+    const storedOtp = await this.redisClient.get(`otp:${email}`);
+     console.log(storedOtp , otp)
+    if (!storedOtp) {
+      throw new BadRequestException('OTP expired or not found');
+     
+    }
+
+    if (storedOtp !== otp) {
+            throw new BadRequestException('Invalid OTP');
+    }
+
+    // 3. OTP valid → mark user verified & save consent
+    await User.Update(user.id ,{ consent : true });
+
+    await this.redisClient.del(`otp:${email}`);
+
+    return 'User verified and consent recorded successfully';
+  }
+
 
   async updatePassword(id: number, data: updatePasswordDto) {
     const existingUser = await User.findbyEmail(data.email);

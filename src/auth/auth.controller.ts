@@ -1,6 +1,7 @@
 import { Body, Controller,  Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { logoutDto, SignInDto, SignUpDto, SO_SignUpDto } from './dto/sign.user.dto';
+import { NewUserMailing } from 'utility/mailing/newUser.client';
 
 @Controller('auth')
 export class AuthController {
@@ -62,6 +63,23 @@ export class AuthController {
         }
     }
 
+
+    @Post('consent-to-terms') 
+        async consentTerms(@Body() body: { email: string, otp: string }) {
+            const { email, otp } = body;
+            if (!email || !otp) {
+                return {
+                    message: 'Email and OTP are required'
+                }
+            }
+            const response = await this.authService.consentToTerms(email, otp);
+            return {
+                message: response
+            }
+        }
+    
+
+
     @Post('logout')
     async logout(@Body() body : logoutDto ) {
         if (!body.token) {
@@ -69,8 +87,6 @@ export class AuthController {
                 message: 'Token is required'
             }
         }
-        console.log('body', body.token);
-        console.log
         const user = await this.authService.logout(body.token);
         if (!user) {
             return {

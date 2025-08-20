@@ -2,6 +2,9 @@ import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
+import { NewUserMailing } from 'utility/mailing/newUser.client';
+import { RedisModule } from 'src/database/cache';
+
 
 @Module({
   imports: [
@@ -9,9 +12,10 @@ import { JwtModule } from '@nestjs/jwt';
       secret: process.env.JWT_SECRET,
       signOptions: { expiresIn: '1h' },
     }),
+    RedisModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [AuthService , NewUserMailing],
   exports: [AuthService],
 })
 export class AuthModule {}
