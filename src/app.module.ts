@@ -15,10 +15,27 @@ import { SalonModule } from './salon/salon.module';
 import { ImagesController } from './images/images.controller';
 import { ImagesService } from './images/images.service';
 import { ImagesModule } from './images/images.module';
+import { APP_GUARD } from '@nestjs/core';
+import { RolesGuard } from './common/guards/roles.guards';
+import { JwtAuthGuard } from './common/guards/jwt.guards';
+
+
+
 
 @Module({
   imports: [UsersModule, AuthModule, ServiceModule, AvailabilityModule, AvailabilityModule, SalonModule, ImagesModule],
   controllers: [AppController, AuthController, ServiceController, AvailabilityController, AvailabilityController, SalonController, ImagesController],
-  providers: [AppService, AvailabilityService, AvailabilityService, SalonService, ImagesService],
+  providers: [AppService, AvailabilityService, AvailabilityService, SalonService, ImagesService ,
+     {
+      provide: APP_GUARD,
+      useClass: JwtAuthGuard,   // makes JWT guard global
+    },
+    {
+      provide: APP_GUARD,
+      useClass: RolesGuard,     // runs after JwtAuthGuard
+    },
+
+  ],
+ 
 })
 export class AppModule {}

@@ -2,12 +2,14 @@ import { Body, Controller,  Post } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { logoutDto, SignInDto, SignUpDto, SO_SignUpDto } from './dto/sign.user.dto';
 import { NewUserMailing } from 'utility/mailing/newUser.client';
+import { Public } from 'src/common/decorators/public.decorators';
 
 @Controller('auth')
 export class AuthController {
     constructor(private readonly authService: AuthService) {}
-
-    @Post('signin')
+    
+    @Post('/signin')
+    @Public()
 
     async signup(@Body() body: SignInDto ) {
         const { email, password } = body;
@@ -43,7 +45,7 @@ export class AuthController {
             response
     }
 }
-    @Post('signup')
+    @Post('client/signup')
     async register(@Body() body: SignUpDto) {
         const { email, password, name , role } = body;
         if (!email || !password || !name || !role) {

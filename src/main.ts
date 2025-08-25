@@ -36,6 +36,11 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);  
 
+  
+
+  //need 2 api gateways  
+  //* API/CLIENT    and API/SALONOWNER
+
   await app.listen( 3000, '0.0.0.0');
   
 

@@ -1,5 +1,6 @@
 import { IsNotEmpty, IsNumber, IsString } from "class-validator";
 import { PartialType } from "@nestjs/mapped-types";
+import { salonGpsDto } from "src/salon/dto/salon.dto";
 
 export class CreateServiceDto {
 
@@ -20,6 +21,12 @@ export class CreateServiceDto {
   
 }
 
-export class UpdateServiceDto  extends  PartialType(CreateServiceDto) {n
+export class serviceGpsDto extends salonGpsDto {
+    @IsString()
+    @IsNotEmpty()
+    service: string;
+}
+
+export class UpdateServiceDto  extends  PartialType(CreateServiceDto) {
 }
 

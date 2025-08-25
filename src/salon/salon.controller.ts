@@ -1,6 +1,10 @@
-import { Body, Controller, Delete, Get, Param, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Query, UseGuards } from '@nestjs/common';
 import { SalonService } from './salon.service';
 import { ApiTags, ApiOperation, ApiQuery } from '@nestjs/swagger';
+import { Roles } from 'src/common/decorators/roles.decorators';
+import { RolesGuard } from 'src/common/guards/roles.guards';
+import { JwtAuthGuard } from 'src/common/guards/jwt.guards';
+import { Public } from 'src/common/decorators/public.decorators';
 
 @ApiTags('salons')
 @Controller('salon')
@@ -8,6 +12,7 @@ export class SalonController {
     constructor(private readonly salonService: SalonService){}
 
     @Get()
+    @Public()   
     @ApiOperation({ summary: 'Get all salons' })
 
     async getAllSalons() {
@@ -19,6 +24,8 @@ export class SalonController {
     }
   
     @Get('nearest')
+    @Roles('client') 
+    @UseGuards(JwtAuthGuard, RolesGuard)
     @ApiOperation({ summary: 'Get nearest salons' })
     @ApiQuery({ name: 'latitude', required: true, type: Number })
     @ApiQuery({ name: 'longitude', required: true, type: Number })

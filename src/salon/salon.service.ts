@@ -39,6 +39,8 @@ export class SalonService {
     }
 
 
+
+
     async desactivateSalon(id: number) {
         const salon = await Salon.findOne(id);  
         if (!salon) {

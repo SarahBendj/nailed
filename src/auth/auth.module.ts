@@ -10,12 +10,12 @@ import { RedisModule } from 'src/database/cache';
   imports: [
     JwtModule.register({
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '1h' },
+      signOptions: { expiresIn: '4h' },
     }),
     RedisModule,
   ],
   controllers: [AuthController],
   providers: [AuthService , NewUserMailing],
-  exports: [AuthService],
+  exports: [AuthService ,JwtModule],
 })
 export class AuthModule {}
