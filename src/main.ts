@@ -9,17 +9,15 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
-    // Serve static files from /bucket
   app.use('/bucket', express.static(join(__dirname, 'bucket')));
 
 
   // Validation pipe
   app.useGlobalPipes(
     new ValidationPipe({
-      whitelist: true,              // strip properties that don't have decorators
-      forbidNonWhitelisted: true,  // throw error if extra properties received
-      transform: true,             // transform payloads to DTO instances
+      whitelist: true,              
+      forbidNonWhitelisted: true,  
+      transform: true,             
     }),
   );
 
@@ -36,10 +34,7 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);  
 
-  
 
-  //need 2 api gateways  
-  //* API/CLIENT    and API/SALONOWNER
 
   await app.listen( 3000, '0.0.0.0');
   

@@ -35,5 +35,6 @@ export class AvailabilityDto {
   @IsNotEmpty()
   @IsString()
   end_time: string;
+  
 
 }

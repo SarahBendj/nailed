@@ -24,11 +24,7 @@ export class ServiceController {
         @ApiQuery({ name: 'longitude', required: true, type: Number })
         @ApiQuery({ name: 'distance', required: true, type: Number })
         async nearestS(@Query('latitude') latitude: number, @Query('longitude') longitude: number, @Query('distance') distance: number, @Query('service') service :string) {
-            if (!latitude || !longitude || !distance) {
-                return {
-                    message: 'Latitude, Longitude and Distance are required'
-                }
-            }
+      
             const nearestSalons = await this.serviceService.nearestService({ latitude, longitude, distance , service});
             return {
                 message: 'Nearest salons retrieved successfully',

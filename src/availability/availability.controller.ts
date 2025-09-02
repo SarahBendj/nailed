@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { AvailabilityService } from './availability.service';
 import { AvailabilityDto, AvailabilityGroupDto } from './dto/availability.dto';
 
@@ -16,20 +16,26 @@ export class AvailabilityController {
             
         };
     }
-
     
   @Get('search')
   async getAvailabilityByGuessingName(@Query('salonName') salonName: string) {
     const response = await this.availabilityService.getAvailabilityByGuessingName(salonName);
-
-
-
     return {
       message: 'Availability retrieved successfully',
       matchedSalons : response.availability,
    
     };
   }
+
+  @Get(':id')
+    async getAvailability(@Param('id') id : number) {
+        const availabilities = await this.availabilityService.getAvailability(id);
+        return {
+            message: 'All availabilities retrieved successfully',
+            availabilities,
+            
+        };
+    }
 
   @Post()
     async createAvailability(@Body() data : AvailabilityGroupDto) {
@@ -40,4 +46,14 @@ export class AvailabilityController {
         availability,
         };
     }
+
+  @Patch(':id')
+  async updateAvailability(@Param('id') id:number , @Body()   data: Partial<AvailabilityDto>) {
+    console.log('Updating availability with ID:', id, 'and data:', data);
+    const availability = await this.availabilityService.updateAvailability(id,data);
+    return {
+      message: 'Availability updated successfully',
+      availability,
+    };
+  }
 }

@@ -2,6 +2,7 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import { Availability } from 'src/models/availibility.model';
 import { AvailabilityDto, AvailabilityGroupDto } from './dto/availability.dto';
 import { Salon } from 'src/models/salon.model';
+import { checkDays } from './utils/availability.checkDays';
 
 @Injectable()
 export class AvailabilityService {
@@ -28,6 +29,19 @@ async getAllAvailabilities() {
   return result;
 }
 
+
+async getAvailability(id : number) {
+  if(!id ){
+     throw new BadRequestException('missing_id')
+  }
+  const availability = await Availability.findBySalonId(id)
+  if(!availability){
+    throw new BadRequestException('not_found')
+  }
+
+  return availability
+
+}
 
   async getAvailabilityByGuessingName(salonName: string) {
   const availabilityList = await Availability.findByName(salonName);
@@ -67,7 +81,9 @@ async getAllAvailabilities() {
 }
 
 async createAvailability(group: AvailabilityGroupDto) {
+
   const { salon_id, sequence, availability } = group;
+    console.log('Received group data:', group); 
  
 
   if (!salon_id || !sequence || !Array.isArray(availability) || availability.length === 0) {
@@ -77,11 +93,16 @@ async createAvailability(group: AvailabilityGroupDto) {
 
   //*REJECT REINSERTION
     const existingAvailability = await Availability.findBySalonId(salon_id);
+    console.log('Existing availability for salon_id', salon_id, ':', existingAvailability);
     if (existingAvailability ) {
       throw new BadRequestException('Weekly availability already exists for this salon and sequence. delete it first.');
     }
 
+    await checkDays(availability);
+    
+
   const entries = availability.map((item) => ({
+    //*FIRST CHECK THE DAYS
     salon_id,
     sequence,
     day: item.day?.toLowerCase(),
@@ -99,6 +120,24 @@ async createAvailability(group: AvailabilityGroupDto) {
     message: 'Weekly availability created successfully for sequence: ' + sequence,
     availability: created,
   };
+
 }
 
+async updateAvailability(id : number ,data: Partial<AvailabilityDto>) {
+
+  if (!id || !data.day) {
+    throw new NotFoundException('Salon_ID OR DAY is required for update.');
+  }
+  const existingAvailability = await Availability.findDayAvailability(id, data.day);
+  console.log('Existing ',  existingAvailability);
+  if (!existingAvailability) {
+    throw new NotFoundException('No availability found for the given ID.');
+
+  }
+  console.log('Existing availability for salon_id', id, 'and day', data.day, ':', existingAvailability);
+  const updatedAvailability = await Availability.updateDayAvailability(id, existingAvailability.id , data);
+  return updatedAvailability;
+
+
+}
 }

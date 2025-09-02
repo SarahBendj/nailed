@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { Service } from 'src/models/service.model';
+import { Service  } from 'src/models/service.model';
 import { CreateServiceDto, serviceGpsDto, UpdateServiceDto } from './dto/create.service';
 import { findNearbySalons } from 'utility/GPS';
 
@@ -36,17 +36,30 @@ export class ServiceService {
     }
 
     async nearestService(data : serviceGpsDto) {
-            const services = await Service.findAll();
-            console.log('data', data)
-            if (!services || services.length === 0) {
-                return [];
-            };
-    
-           const nearestServices = findNearbySalons(data.latitude, data.longitude, data.distance, services);
-            console.log('nearestservices', nearestServices);
-            return nearestServices;
-    
+           
+        const serviceName = data.service?.toLowerCase();
+        const services = await Service.findByName(serviceName);
+       
+
+        if (!services || services.length === 0) {
+            return [];
         }
+
+        if (!data.latitude || !data.longitude || !data.distance) {
+            return services;
+        }
+
+        return findNearbySalons(
+            data.latitude,
+            data.longitude,
+            Number(data.distance),
+            services
+        );
+    }
+
+    
+        
+
     async updateService(id: number, service: UpdateServiceDto) {
         if (!id) {
             throw new Error('Service ID is required');

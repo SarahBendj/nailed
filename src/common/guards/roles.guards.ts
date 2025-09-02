@@ -8,7 +8,6 @@ export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    // ✅ Skip guard if route is public
     const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
       context.getHandler(),
       context.getClass(),
@@ -16,7 +15,7 @@ export class RolesGuard implements CanActivate {
     if (isPublic) return true;
 
     const roles = this.reflector.get<string[]>(Roles, context.getHandler());
-    if (!roles || roles.length === 0) return true; // no role restriction
+    if (!roles || roles.length === 0) return true;
 
     const request = context.switchToHttp().getRequest();
     const user = request.user; // should already be set by JwtAuthGuard
