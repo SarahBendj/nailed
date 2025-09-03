@@ -18,14 +18,17 @@ import { ImagesModule } from './images/images.module';
 import { APP_GUARD } from '@nestjs/core';
 import { RolesGuard } from './common/guards/roles.guards';
 import { JwtAuthGuard } from './common/guards/jwt.guards';
+import { BookingController } from './booking/booking.controller';
+import { BookingModule } from './booking/booking.module';
+import { ScheduleModule } from '@nestjs/schedule';
 
 
 
 
 @Module({
-  imports: [UsersModule, AuthModule, ServiceModule, AvailabilityModule, AvailabilityModule, SalonModule, ImagesModule],
-  controllers: [AppController, AuthController, ServiceController, AvailabilityController, AvailabilityController, SalonController, ImagesController],
-  providers: [AppService, AvailabilityService, AvailabilityService, SalonService, ImagesService ,
+  imports: [UsersModule, AuthModule, ServiceModule, AvailabilityModule, AvailabilityModule, SalonModule, ImagesModule,BookingModule, ScheduleModule.forRoot()],
+  controllers: [AppController, AuthController, ServiceController,  SalonController, ImagesController, BookingController],
+  providers: [AppService,  SalonService, ImagesService ,
      {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,   // makes JWT guard global

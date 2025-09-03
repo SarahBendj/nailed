@@ -2,7 +2,7 @@ import { IsNotEmpty, IsString } from "class-validator";
 
 export interface AvailabilityGroupDto {
   salon_id: number;
-  sequence: '1 month' | '3 months' | '6 months' | 'always';
+  sequence: '30' | '60' | '90' | '120';
   availability: Omit<AvailabilityDto, 'salon_id' | 'date'>[]; 
 }
 
