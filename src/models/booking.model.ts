@@ -8,7 +8,7 @@ export class Booking extends Core {
 
     static async releaseOldReservations(): Promise<any[]> {
     const sqlQuery = `
-      UPDATE booking
+      UPDATE ${this.tableName}
       SET status = 'free'
       WHERE status = 'reserved'
         AND (created_at) < NOW() - INTERVAL '5 minutes' 
@@ -21,6 +21,46 @@ export class Booking extends Core {
     } catch (error) {
       console.error('Error releasing old reservations:', error);
       return [];
+    }
+  }
+
+static async findBySalonId(id: number): Promise<any[]> {
+  const sqlQuery = `SELECT * FROM ${this.tableName} WHERE salon_id = $1`;
+  const result = await DB.query(sqlQuery, [id]);
+
+  return result.rows;
+}
+
+
+  static async findCancelled(): Promise<any[]> {
+    const sqlQuery = `
+      SELECT * FROM ${this.tableName}
+      WHERE status IN ('cancelled_by_client', 'cancelled_by_salon') ;
+    `;
+
+    try {
+      const result = await DB.query(sqlQuery);
+      return result.rows;
+    } catch (error) {
+      console.error('Error releasing old reservations:', error);
+      return [];
+    }
+  }
+
+  static async cancelReservations(id :number, status:string): Promise<any> {
+    const sqlQuery = `
+      UPDATE ${this.tableName}
+      SET status = $2
+      WHERE id =$1
+      RETURNING *;
+    `;
+
+    try {
+      const result = await DB.query(sqlQuery, [ id,status ]);
+      return result.rows[0];
+    } catch (error) {
+      console.error('Error releasing old reservations:', error);
+      return null;
     }
   }
 
@@ -60,7 +100,7 @@ export class Booking extends Core {
 static async checkIfCancelled(id: number): Promise<boolean> {
   const sqlQuery = `
     SELECT status
-    FROM booking
+    FROM ${this.tableName}
     WHERE status IN ('cancelled_by_client', 'cancelled_by_salon')
       AND id = $1
   `;
@@ -70,19 +110,33 @@ static async checkIfCancelled(id: number): Promise<boolean> {
   return result.rows.length > 0;
 }
 
-static async releaseCancelledReservations(id: number): Promise<boolean> { 
+static async releaseCancelledReservations(): Promise<boolean> { 
   const sqlQuery = `
-    UPDATE booking
-    SET status = 'free'
-    WHERE status IN ('cancelled_by_client', 'cancelled_by_salon')
-      AND id = $1
-    RETURNING *;
+    DELETE FROM  ${this.tableName}
+    WHERE status IN ('cancelled_by_client', 'cancelled_by_salon');
   `;
 
-  const result = await DB.query(sqlQuery, [id]);
-  return result.rows.length > 0; 
+  const result = await DB.query(sqlQuery);
+  console.log(result.rows.length)
+    return result.rows.length > 0; 
 }
 
-  }
+
+ static async DeleteFree(): Promise<any[]> {
+    const sqlQuery = `
+      DELETE FROM ${this.tableName}
+      WHERE status = 'free';
+    `;
+
+    try {
+      const result = await DB.query(sqlQuery);
+      return result.rows;
+    } catch (error) {
+      console.error('Error releasing old reservations:', error);
+      return [];
+    }
 
   
+}
+
+}

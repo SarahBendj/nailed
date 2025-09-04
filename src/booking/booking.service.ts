@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { createReservationDTO, updateReservationDTO } from './dto/booking.dto';
 import { Booking } from 'src/models/booking.model';
+import { Booking_Event } from 'src/models/booking.events.model';
 
 @Injectable()
 export class BookingService {
@@ -24,53 +25,89 @@ export class BookingService {
     return reserved;
   }
 
+  async getBookingsBysalonId(id : number) :Promise<any[]>{
+
+    if(!id) {
+      throw new BadRequestException('MISSING_ID')
+    }
+
+    const bookings = await Booking.findBySalonId(Number(id))
+    if (bookings && bookings.length > 0){
+      return bookings
+    }else return []
+  }
+
   async updateReservation(data: updateReservationDTO) {
-       const { id ,status } = data;
+  const { id, status: newStatus } = data;
 
-    if(!status || !id) {
-        throw new BadRequestException('MISSING_DATA');
+  if (!newStatus || !id) {
+    throw new BadRequestException('MISSING_DATA');
+  }
 
-    }
+  const reservationFound = await Booking.findOne(Number(id));
+  if (!reservationFound) {
+    throw new BadRequestException('NOT_FOUND');
+  }
 
-    const findReservation = await Booking.findOne(Number(id))
-    if(!findReservation) {
-        throw new BadRequestException('NOT_FOUND')
-    }
+  //REPORT HISTORY INTO BOOKING EVENT TABLE
+    const { id: _ignore, ...rest } = reservationFound;
 
-     //*CANCELLED CASE :if reservation is cancelled no going back
-    const isCancelled = await Booking.checkIfCancelled(Number(id))
-    if(isCancelled) {
-        throw new BadRequestException('RESERVATION_CANCELLED')
-    }
+    await Booking_Event.Create({
+      ...rest,                   
+      booking_id: id,             
+    });
 
-    //*CANCELLING : client OR salon is cancelling
+  //ALREADY CANCELLED => BLOCK TRANSACTION
+  const isCancelled = await Booking.checkIfCancelled(Number(id));
+  if (isCancelled) {
+    throw new BadRequestException('RESERVATION_CANCELLED');
+  }
 
-    const CANCEL_STATUSES = ['cancelled_by_client', 'cancelled_by_salon'];
-    if (CANCEL_STATUSES.includes(status)) {
-        await Booking.releaseCancelledReservations(Number(id))
-    }
-
-    //*PROCESSING FLOW: REQUESTED OR CONFIRMED
+  const CANCEL_STATUSES = ['cancelled_by_client', 'cancelled_by_salon'];
   const ALLOWED_STATUSES = ['requested', 'confirmed'];
-  if (!ALLOWED_STATUSES.includes(status)) {
-    throw new BadRequestException('INVALID_STATUS');
+
+  let affectedReservation;
+
+  if (CANCEL_STATUSES.includes(newStatus)) {
+    //CANCELLING CASE : RESET SLOTS
+    affectedReservation = await Booking.cancelReservations(Number(id) ,newStatus);
+  } else {
+    if (!ALLOWED_STATUSES.includes(newStatus)) {
+      throw new BadRequestException('INVALID_STATUS');
+    }
+   
+
+    //UPDATE STATUS INTO PRINCIPAL BOOKING TABLE
+    affectedReservation = await Booking.Update(Number(id), { status: newStatus });
   }
 
-    const affectedReservation = await Booking.Update(Number(id) ,
-      { status: status },
-    )
+  return affectedReservation;
 
+}
 
-    return affectedReservation
+async freeNonUsedreservationOlderThanFifteenMins() {
+  const freeReservations = await Booking.releaseOldReservations();
+  const cancelledReservations = await Booking.findCancelled();
+
+  if (cancelledReservations.length > 0) {
+    for (const reservation of cancelledReservations) {
+      const { id: _ignore, ...rest } = reservation;
+
+      await Booking_Event.Create({
+        ...rest,
+        booking_id: reservation.id,
+      });
+    }
   }
-  async freeNonUsedreservationOlderThanfifteenMins(){
 
-    const freeReservations = await Booking.releaseOldReservations()
-    if(!freeReservations){
-        return []
-    }else 
-        return freeReservations
+  await Booking.releaseCancelledReservations();
 
-  }
+  return freeReservations || [];
+}
+
+async deleteFreeReservations(){
+  await Booking.DeleteFree()
+}
+
 }
 

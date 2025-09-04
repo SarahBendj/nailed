@@ -9,20 +9,21 @@ export class BookingSchedulerService {
   constructor(private readonly bookingService: BookingService) {}
 
   // Cron executes every minute
-  @Cron(CronExpression.EVERY_MINUTE)
-  async releaseOldReservations() {
-    try {
-        console.log('#####################################################')
-      // Make sure method name matches exactly your service
-      const released = await this.bookingService.freeNonUsedreservationOlderThanfifteenMins();
+@Cron(CronExpression.EVERY_MINUTE)
+async releaseOldReservations() {
+  try {
+    this.logger.debug('################### RELEASING NON USED RESERVATIONS ########################');
+    const released = await this.bookingService.freeNonUsedreservationOlderThanFifteenMins();
 
-      if (released.length > 0) {
-        this.logger.log(`Released ${released.length} old reservations`);
-      } else {
-        this.logger.debug('No old reservations to release');
-      }
-    } catch (err) {
-      this.logger.error('Error releasing old reservations', err);
+    if (released && released.length > 0) {
+      await this.bookingService.deleteFreeReservations();
+      this.logger.log(`Released ${released.length} old reservations`);
+    } else {
+      this.logger.debug('No old reservations to release');
     }
+  } catch (err) {
+    this.logger.error('Error releasing old reservations', err);
   }
+}
+
 }

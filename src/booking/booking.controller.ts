@@ -6,7 +6,11 @@ import { createReservationDTO, updateReservationDTO } from './dto/booking.dto';
 export class BookingController {
     constructor(private readonly bookingService : BookingService ) {}
 
-    // @Get
+    @Get(':id')
+    async displayBookingsBysalonId(@Param('id') id : string){
+        const result = await this.bookingService.getBookingsBysalonId(Number(id))
+        return result
+    }
 
 
     @Post()
