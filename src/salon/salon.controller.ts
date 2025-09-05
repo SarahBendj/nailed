@@ -43,13 +43,20 @@ export class SalonController {
         };
     }
 
+    @Get('best-rated')
+    async displayBestRated(){
+        const result = await this.salonService.getBestRated()
+        return result
+
+    }
+
       @Get(':id')
       @ApiOperation({ summary: 'Get salon by ID' })
       @ApiQuery({ name: 'id', required: true, type: Number })
     async getSalonById(@Param('id') id: number) {
         if (!id) {
             return {
-                message: 'Salon ID is required'
+                message: 'MISSING_ID'
             }
         }
         const salon = await this.salonService.getSalonById(id);

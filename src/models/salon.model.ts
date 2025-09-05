@@ -16,6 +16,25 @@ export class Salon extends Core {
     }
   }
 
+static async findBestRated() {
+  try {
+    const sqlQuery = `
+      SELECT * 
+      FROM ${this.tableName}
+      WHERE rating >= 3.7
+      ORDER BY rating DESC
+      LIMIT 10
+    `;
+
+    const result = await DB.query(sqlQuery);
+    return result.rows || [];
+  } catch (error) {
+    console.error('Error in findBestRated:', error);
+    throw error;
+  }
+}
+
+
 
 }
 

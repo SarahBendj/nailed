@@ -26,7 +26,6 @@ export class SalonService {
     }
 
     async nearestSalons(data : salonGpsDto) {
-        console.log('data', data)
         const salons = await Salon.findAll();
         if (!salons || salons.length === 0) {
             return [];
@@ -37,6 +36,19 @@ export class SalonService {
         return nearestSalons;
 
     }
+    
+    async getBestRated() {
+        const salons = await Salon.findBestRated();
+        if (!salons || salons.length === 0) {
+            return [];
+        };
+
+       
+        return salons;
+
+    }
+
+
 
 
 
