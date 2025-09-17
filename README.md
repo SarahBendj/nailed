@@ -6,11 +6,12 @@
 ## ⏳ Have some time?
 
 ### ✅ YES  
-Great! Scroll down to explore the project in more detail.
+Parfait ! Faites défiler pour découvrir le projet plus en détail.
 
 ### ❌ NO  
-No worries — it's not dockerized yet.  
-Just run the `bash INITIATOR.sh` script to get started quickly.
+Pas de souci, le projet n'est pas encore dockerisé.  
+Lancez simplement le script `bash INITIATOR.sh` pour démarrer rapidement.
+
  
 ### Objectifs
 
@@ -38,8 +39,8 @@ Just run the `bash INITIATOR.sh` script to get started quickly.
 
 | Application            | Stack                                      |
 | ---------------------- | ------------------------------------------ |
-| **App Client**         | React Native, Redux/Zustand, Axios         |
-| **App Salon**          | React Native (routes et droits différents) |
+| **App Client**         | Flutter (MOBILE DEV PART )        |
+| **App Salon**          | Flutter (MOBILE DEV PART )   |
 | **Dashboard Web (V2)** | Next.js, Tailwind CSS, Shadcn UI, NextAuth |
 
 ---
@@ -88,7 +89,7 @@ Chaque salon peut uploader jusqu’à 8 images, stockées dans une arborescence 
 
 **Endpoints client** (`/api/v1/client`) :
 
-* Voir salons proches
+* Voir salons proches / mieux notés / selon préstation
 * Réserver un créneau
 * Annuler / confirmer un RDV
 * Gérer son profil, consulter l’historique
@@ -106,7 +107,7 @@ Chaque salon peut uploader jusqu’à 8 images, stockées dans une arborescence 
 ### 🚀 Pourquoi ce projet ?
 
 Ce projet met en avant mes compétences de **développeur back-end** :
-
+* Love coding
 * Conception d’API REST avec **NestJS**
 * Mise en place de **logiques métier complexes**
 * Authentification et sécurité des accès
