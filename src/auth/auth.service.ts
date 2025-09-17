@@ -16,51 +16,79 @@ export class AuthService {
     private readonly newUserMailing: NewUserMailing,
   @Inject('REDIS_CLIENT') private readonly redisClient: Redis,) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
-    if (!email || !password) {
-      return null;
-    }
-
-    const user = await User.findbyEmail(email);
-    if (!user) {
-      return null;
-    }
-
-    const isHashed = user.password.startsWith('$2b$'); 
-
-    // Si le mot de passe est encore en clair (ancien compte ?)
-    if (!isHashed) {
-      if (password === user.password) {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        await User.Update(user.id , { password: hashedPassword });
-        return { id: user.id, email: user.email };
-      } else {
-        return new BadRequestException(' Email or password invalid');
-      }
-    }
-
-    // Cas normal : comparer avec bcrypt
-    const match = await bcrypt.compare(password, user.password);
-    if (match) {
-      return { id: user.id, email: user.email };
-    }
-
-    return new BadRequestException(' Email or password invalid');;
+async validateUser(email: string, password: string): Promise<any> {
+  if (!email || !password) {
+    throw new BadRequestException('MISSING_CREDENTIALS');
   }
+
+  const user = await User.findbyEmail(email);
+  if (!user) {
+    throw new BadRequestException('EMAIL_OR_PASSWORD_INVALID');
+  }
+
+  const isHashed = user.password.startsWith('$2b$');
+
+  //  Cas legacy : mot de passe en clair (ancien compte ?)
+  if (!isHashed) {
+    if (password === user.password) {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await User.Update(user.id, { password: hashedPassword });
+
+      return {
+        user_id: user.id,
+        email: user.email,
+        role: user.role,
+        consent: user.consent,
+        salon_id: user.salon_id ?? null,
+      };
+    } else {
+      throw new BadRequestException('EMAIL_OR_PASSWORD_INVALID');
+    }
+  }
+
+  //  Cas normal : bcrypt
+  const match = await bcrypt.compare(password, user.password);
+  if (!match) {
+    throw new BadRequestException('EMAIL_OR_PASSWORD_INVALID');
+  }
+
+  return {
+    id: user.id,
+    email: user.email,
+    role: user.role,
+    consent: user.consent,
+    salon_id: user.salon_id ?? null,
+  };
+}
 
   async login(user: any) {
+    console.log('user in login service', user);
+  const payload = {
+    user_id: user.user_id,
+    email: user.email,
+    role: user.role,
+    consent: user.consent,
+    salon_id: user.salon_id ?? null,
+  };
 
-    const payload = { sub: user.id, email: user.email };
-    const oldToken = await Token.findByConsumerId(user.id);
-    if(oldToken && oldToken.id){
-      await Token.Delete(oldToken.id);
-    }
-    const access_token = this.jwtService.sign(payload);
-    await Token.Create( {consumer_id : user.id, token: access_token ,expires_at :'2025-05-07'} );
-    return {
-      access_token: access_token
-    };
+  const oldToken = await Token.findByConsumerId(user.id);
+  if (oldToken?.id) {
+    await Token.Delete(oldToken.id);
   }
+
+  const access_token = this.jwtService.sign(payload, { expiresIn: '4h' });
+
+  await Token.Create({
+    consumer_id: user.id,
+    token: access_token,
+    expires_at: new Date(Date.now() + 1000 * 60 * 60),
+  });
+
+  return { access_token };
+  
+  }
+
+
   async register(user: SignUpDto) {
     const existingUser = await User.findbyEmail(user.email);
     if (existingUser) {

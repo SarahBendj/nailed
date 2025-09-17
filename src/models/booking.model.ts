@@ -1,6 +1,9 @@
 import { Core } from "src/core/parent.entity";
 import { DB } from "src/database/db";
 import { Service } from "./service.model";
+import { User } from "./user.model";
+import { Salon } from "./salon.model";
+import { Codes } from "./codes.model";
 
 export class Booking extends Core {
     static tableName ='booking'
@@ -23,14 +26,41 @@ export class Booking extends Core {
       return [];
     }
   }
+  //*todo
+  //    static async findByBookingIdNsalonId(booking_id : number , salon_id :number): Promise<any[]> {
+  //   const sqlQuery = `
+  //    SELECT * FROM ${this.tableName} WHERE
+  //    id=$1 AND salon_id = $2 AND  status IN ('cancelled_by_client', 'requested', 'cancelled_by_salon', 'confirmed') ;`;
+
+  //   try {
+  //     const result = await DB.query(sqlQuery, [booking_id ,salon_id]);
+  //     return result.rows;
+  //   } catch (error) {
+  //     console.error('Error releasing old reservations:', error);
+  //     return [];
+  //   }
+  // }
 
 static async findBySalonId(id: number): Promise<any[]> {
-  const sqlQuery = `SELECT * FROM ${this.tableName} WHERE salon_id = $1`;
+  const sqlQuery = `SELECT b.* ,s.*, u.name FROM ${this.tableName} b 
+  JOIN ${User.tableName} u ON b.client_id = u.id 
+  JOIN ${Service.tableName } s ON b.service_id = s.id WHERE b.salon_id = $1
+  AND b.status IN ('cancelled_by_client', 'requested', 'cancelled_by_salon', 'confirmed')  `;
   const result = await DB.query(sqlQuery, [id]);
 
   return result.rows;
 }
 
+
+static async findByClientId(id: number): Promise<any[]> {
+  const sqlQuery = `SELECT  b.id ,b.start_time ,b.client_id, b.start_time ,b.end_time ,b.date ,srv.price, srv.name ,s.name ,s.address , c.code FROM ${this.tableName} b 
+  JOIN ${Salon.tableName} s ON b.salon_id = s.id 
+  JOIN ${Codes.tableName} c ON c.booking_id = b.id
+  JOIN ${Service.tableName } srv ON b.service_id = srv.id WHERE b.client_id = $1`;
+  const result = await DB.query(sqlQuery, [id]);
+
+  return result.rows;
+}
 
   static async findCancelled(): Promise<any[]> {
     const sqlQuery = `

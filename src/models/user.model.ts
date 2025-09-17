@@ -1,5 +1,6 @@
 import { Core } from "src/core/parent.entity";
 import { DB } from "src/database/db";
+import { Salon } from "./salon.model";
 
 export class User extends Core {
     static tableName : string ='consumer';
@@ -7,7 +8,10 @@ export class User extends Core {
   
     static async findbyEmail(email: string) {
         try {
-          const query = `SELECT * FROM ${this.tableName} WHERE "email" = $1`;
+          const query = `SELECT u.*, s.id AS salon_id
+                FROM ${this.tableName} u
+                LEFT JOIN ${Salon.tableName} s ON s.user_id = u.id
+                WHERE u.email = $1`;
           const values = [email];
           const response = await DB.query(query, values);
           

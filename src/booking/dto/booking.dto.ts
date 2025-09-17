@@ -33,7 +33,7 @@ export class updateReservationDTO {
     
     @IsNotEmpty()
     @IsString()
-    id : string ;
+    id : number ;
 
     @IsNotEmpty()
     @IsString()
