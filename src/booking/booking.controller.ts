@@ -27,7 +27,6 @@ export class BookingController {
     }
    @Get('client')
     async displayBookingsByClientId(@Req() request: AuthenticatedRequest) {
-    // Vérifie que l'utilisateur est bien un client
     const id = request.user?.role === 'client' ? request.user?.user_id : null;
 
     if (!id) {
@@ -46,13 +45,15 @@ export class BookingController {
 
     }
 
-    @Patch('client/:id')
+    @Patch('client')
     async updateAreservationByClient(@Body() Body :Partial<updateReservationDTO> , @Req() request: AuthenticatedRequest){
-        const id = request.user?.role === 'salon' ? Number(request.user.user_id) : null;
-            if (!id) {
+        console.log('body', Body)
+        const user_id = request.user?.role === 'client' ? Number(request.user.user_id) : null;
+            if (!user_id) {
             throw new UnauthorizedException('You are not authorized to access this resource');
             }
         const status = Body.status
+        const id = Body.booking_id
         
         const result = await this.bookingService.updateReservationByClient({id ,status})
         return result
@@ -60,11 +61,12 @@ export class BookingController {
 
      @Patch('salon/manage')
     async updateAreservationBySalon(@Body() Body :Partial<updateReservationDTO> ,@Req() request: AuthenticatedRequest){
-        const id = request.user?.role === 'salon' ? Number(request.user.salon_id) : null;
-            if (!id) {
+        const salon_id = request.user?.role === 'salon' ? Number(request.user.salon_id) : null;
+            if (!salon_id) {
             throw new UnauthorizedException('You are not authorized to access this resource');
             }
         const status = Body.status
+        const id = Body.booking_id
         const result = await this.bookingService.updateReservationBySalon({id ,status  })
         return result
     }

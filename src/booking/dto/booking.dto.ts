@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsEnum} from "class-validator"
+import { IsString, IsNotEmpty, IsEnum, IsNumber} from "class-validator"
 
 export class createReservationDTO {
     
@@ -32,8 +32,12 @@ export class createReservationDTO {
 export class updateReservationDTO {
     
     @IsNotEmpty()
-    @IsString()
-    id : number ;
+    @IsNumber()
+    id ?: number ;
+
+    @IsNotEmpty()
+    @IsNumber()
+    booking_id ?: number ;
 
     @IsNotEmpty()
     @IsString()

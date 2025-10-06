@@ -32,19 +32,8 @@ export class AuthController {
      
     }
 
-    @Post('salonowner/signup')
-    async salonOwnerRegister(@Body() body: SO_SignUpDto) {
-        if (!body) {
-            return {
-                message: 'all columns are required'
-            }
-        }
-        const response = await this.authService.registerforSalonOwner(body);
-        return {
-            response
-    }
-}
-    @Post('client/signup')
+ @Post('signup')
+ @Public()
     async register(@Body() body: SignUpDto) {
         const { email, password, name , role } = body;
         if (!email || !password || !name || !role) {
@@ -64,8 +53,7 @@ export class AuthController {
         }
     }
 
-
-    @Post('consent-to-terms') 
+     @Post('consent-to-terms') 
         async consentTerms(@Body() body: { email: string, otp: string }) {
             const { email, otp } = body;
             if (!email || !otp) {
@@ -78,10 +66,8 @@ export class AuthController {
                 message: response
             }
         }
-    
 
-
-    @Post('logout')
+         @Post('logout')
     async logout(@Body() body : logoutDto ) {
         if (!body.token) {
             return {
@@ -95,6 +81,29 @@ export class AuthController {
             }
         }
     }
+    
+    //**SALON AREA */
+
+    @Post('so/signup')
+    @Public()
+    async salonOwnerRegister(@Body() body: SO_SignUpDto) {
+        if (!body) {
+            return {
+                message: 'all columns are required'
+            }
+        }
+        const response = await this.authService.registerforSalonOwner(body);
+        return {
+            response
+    }
+}
+   
+
+
+   
+
+
+   
 }
 
  

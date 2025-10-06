@@ -84,7 +84,7 @@ async getBookingsByClientId(id: number): Promise<any[]> {
   }
 
   //REPORT HISTORY INTO BOOKING EVENT TABLE
-    const { id: _ignore, ...rest } = reservationFound;
+    const { id: _ignore, checked_in,  ...rest } = reservationFound;
 
     await Booking_Event.Create({
       ...rest,                   
@@ -107,7 +107,7 @@ async getBookingsByClientId(id: number): Promise<any[]> {
     affectedReservation = await Booking.cancelReservations(Number(id) ,newStatus);
   } else {
     if (!ALLOWED_STATUSES.includes(newStatus)) {
-      throw new BadRequestException('INVALID_STATUS');
+      throw new BadRequestException('INVALID_STATUS : ONLY -- requested OR cancelled_by_client --ARE ALLOWED');
     }
    
 

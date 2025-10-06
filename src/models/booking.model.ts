@@ -53,11 +53,15 @@ static async findBySalonId(id: number): Promise<any[]> {
 
 
 static async findByClientId(id: number): Promise<any[]> {
-  const sqlQuery = `SELECT  b.id ,b.start_time ,b.client_id, b.start_time ,b.end_time ,b.date ,srv.price, srv.name ,s.name ,s.address , c.code FROM ${this.tableName} b 
+  const sqlQuery = `SELECT  b.id ,b.start_time ,b.client_id ,b.end_time ,b.date ,srv.price, srv.name ,s.name ,s.address , c.code FROM ${this.tableName} b 
   JOIN ${Salon.tableName} s ON b.salon_id = s.id 
-  JOIN ${Codes.tableName} c ON c.booking_id = b.id
+  LEFT JOIN ${Codes.tableName} c ON c.booking_id = b.id
   JOIN ${Service.tableName } srv ON b.service_id = srv.id WHERE b.client_id = $1`;
   const result = await DB.query(sqlQuery, [id]);
+  
+  if(result.rows.length ===0) {
+    return []
+  }
 
   return result.rows;
 }

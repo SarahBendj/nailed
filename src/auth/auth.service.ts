@@ -62,9 +62,8 @@ async validateUser(email: string, password: string): Promise<any> {
 }
 
   async login(user: any) {
-    console.log('user in login service', user);
   const payload = {
-    user_id: user.user_id,
+    user_id: user.id,
     email: user.email,
     role: user.role,
     consent: user.consent,
