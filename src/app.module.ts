@@ -28,6 +28,7 @@ import { ReviewModule } from './review/review.module';
 
 
 
+
 @Module({
   imports: [UsersModule, AuthModule, ServiceModule, AvailabilityModule, AvailabilityModule, SalonModule, ImagesModule,BookingModule, ScheduleModule.forRoot(), ReviewModule],
   controllers: [AppController, AuthController, ServiceController,  SalonController, ImagesController, BookingController, ReviewController],

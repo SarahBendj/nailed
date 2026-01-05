@@ -12,7 +12,6 @@ export class SalonController {
     constructor(private readonly salonService: SalonService){}
 
     @Get()
-    @Public()   
     @ApiOperation({ summary: 'Get all salons' })
 
     async getAllSalons() {

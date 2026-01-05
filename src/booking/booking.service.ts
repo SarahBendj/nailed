@@ -125,7 +125,7 @@ async freeNonUsedreservationOlderThanFifteenMins() {
 
   if (cancelledReservations.length > 0) {
     for (const reservation of cancelledReservations) {
-      const { id: _ignore, ...rest } = reservation;
+      const { id: _ignore, checked_in, ...rest } = reservation;
 
       await Booking_Event.Create({
         ...rest,

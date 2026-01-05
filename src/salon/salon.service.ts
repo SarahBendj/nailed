@@ -2,17 +2,35 @@ import { Injectable } from '@nestjs/common';
 import { Salon } from 'src/models/salon.model';
 import { findNearbySalons, GPS } from 'utility/GPS';
 import { salonGpsDto } from './dto/salon.dto';
+import { ImagesService }  from  'src/images/images.service';
 
 @Injectable()
 export class SalonService {
+    constructor(private readonly imagesService: ImagesService) {} 
+    
+  async getAllSalons() {
+    const salons = await Salon.findAll();
+    console.log('salons', salons);
 
-    async getAllSalons() {
-        const salons = await Salon.findAll();
-        if (!salons || salons.length === 0) {
-        return [];
-        }
-        return salons
+    if (!salons || salons.length === 0) {
+      return [];
     }
+
+    // On récupère les images pour chaque salon
+    const salonsWithImages = await Promise.all(
+      salons.map(async (salon) => {
+        const images = await this.imagesService.retriveImages('salons', salon.id.toString());
+        return {
+          ...salon,
+          images: images.urls, // toujours un tableau, vide si aucune image
+        };
+      }),
+    );
+
+    return salonsWithImages;
+  }
+
+
 
     async getSalonById(id: number) {
         const salon = await Salon.findOne(id);

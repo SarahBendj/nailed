@@ -18,7 +18,8 @@ export class NewUserMailing {
       const otp = generateOTP(6);
 
       // Save OTP in Redis with 5min TTL
-      await this.redisClient.set(`mail:${email}`, otp, 'EX', 300);
+      const block =await this.redisClient.set(`mail:${email}`, otp, 'EX', 30000);
+      console.log('OTP saved in Redis:', block);
 
       // Send email
       await resend.emails.send({

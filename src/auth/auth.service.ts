@@ -7,6 +7,7 @@ import { Token } from 'src/models/token.model';
 import { Salon } from 'src/models/salon.model';
 import { DB } from 'src/database/db';
 import { NewUserMailing } from 'utility/mailing/newUser.client';
+import { PasswordResetMailing } from 'utility/mailing/resetPassword';
 import Redis from 'ioredis';
 
 @Injectable()
@@ -14,6 +15,7 @@ export class AuthService {
   constructor(
     private readonly jwtService: JwtService,
     private readonly newUserMailing: NewUserMailing,
+    private readonly passwordResetMailing: PasswordResetMailing,
   @Inject('REDIS_CLIENT') private readonly redisClient: Redis,) {}
 
 async validateUser(email: string, password: string): Promise<any> {
@@ -69,11 +71,15 @@ async validateUser(email: string, password: string): Promise<any> {
     consent: user.consent,
     salon_id: user.salon_id ?? null,
   };
+const oldTokens = await Token.findByConsumerId(user.id);
 
-  const oldToken = await Token.findByConsumerId(user.id);
-  if (oldToken?.id) {
-    await Token.Delete(oldToken.id);
+if (oldTokens.length > 0) {
+  for (const token of oldTokens) {
+    if (token.id)
+    await Token.Delete(token.id);
   }
+}
+
 
   const access_token = this.jwtService.sign(payload, { expiresIn: '4h' });
 
@@ -112,8 +118,9 @@ async validateUser(email: string, password: string): Promise<any> {
     }
     //*check in redis
         // 2. Check OTP from Redis
-    const storedOtp = await this.redisClient.get(`otp:${email}`);
-     console.log(storedOtp , otp)
+  const storedOtp = await this.redisClient.get(`mail:${email}`);
+console.log(storedOtp, otp);
+
     if (!storedOtp) {
       throw new BadRequestException('OTP expired or not found');
      
@@ -149,25 +156,78 @@ async validateUser(email: string, password: string): Promise<any> {
     if (updatedUser) {
       return {
         message: 'Password updated successfully',
-        user: updatedUser,
+      
       };
     }
   }
 
-  async logout(used_token: string) {
-    
-    const token = await Token.findByConsumerId(used_token);
-
-    console.log('token', token);
-    if (token && token.id) {
-      await Token.Delete(token.id);
-      return { message: 'Logout successful' };
-     
+  async requestPasswordReset(email: string) {
+    const existingUser = await User.findbyEmail(email);
+    if (!existingUser ) {
+      throw new BadRequestException('User does not exist');  
     }
- 
-     throw new BadRequestException('Token not found');
 
+    // SEND A MAIL
+    const emailed = await this.passwordResetMailing.sendToClient(email, existingUser.name);
+    if (!emailed) {
+      throw new BadRequestException('Failed to send password reset email');
     }
+   
+
+    return {
+      message: 'OTP sent to email successfully',
+    };
+  }
+  async passwordForgotten(email: string, otp: string, newPassword: string) {
+    const existingUser = await User.findbyEmail(email);
+    if (!existingUser ) {
+      throw new BadRequestException('User does not exist');  
+    }
+    const storedOtp = await this.redisClient.get(`mail:${email}`);
+    if (!storedOtp) {
+      throw new BadRequestException('OTP expired or not found');
+    }
+
+    if (storedOtp !== otp) {
+            throw new BadRequestException('Invalid OTP');
+    }
+
+    // OTP valid → update password
+    await this.redisClient.del(`otp:${email}`);
+    const NewPwd = await bcrypt.hash(newPassword, 10);
+
+    const updatedUser = await User.Update(existingUser.id, {
+      password: NewPwd,
+    });
+    if (!updatedUser) {
+      throw new BadRequestException('Failed to update password');
+    }
+
+    if (updatedUser) {
+      return {
+        message: 'Password updated successfully',
+      
+      };
+    }
+  }
+
+  
+
+async logout(user: any) {
+  const tokens = await Token.findByConsumerId(user.user_id);
+
+  if (tokens.length === 0) {
+    throw new BadRequestException('Token not found');
+  }
+
+  for (const token of tokens) {
+    if (token.id)
+    await Token.Delete(token.id);
+  }
+
+  return { message: 'Logout successful' };
+}
+
 
    async registerforSalonOwner(salonOwner: SO_SignUpDto) {
   console.log('salonOwner', salonOwner);

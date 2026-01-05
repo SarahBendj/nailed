@@ -1,7 +1,8 @@
-import { Body, Controller,  Post } from '@nestjs/common';
+import { Body, Controller,  HttpCode,  Post, Put, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { logoutDto, SignInDto, SignUpDto, SO_SignUpDto } from './dto/sign.user.dto';
 import { Public } from 'src/common/decorators/public.decorators';
+import { JwtAuthGuard } from 'src/common/guards/jwt.guards';
 
 @Controller('auth')
 export class AuthController {
@@ -54,6 +55,7 @@ export class AuthController {
     }
 
      @Post('consent-to-terms') 
+     @Public()
         async consentTerms(@Body() body: { email: string, otp: string }) {
             const { email, otp } = body;
             if (!email || !otp) {
@@ -67,20 +69,82 @@ export class AuthController {
             }
         }
 
-         @Post('logout')
-    async logout(@Body() body : logoutDto ) {
-        if (!body.token) {
+
+
+    @UseGuards(JwtAuthGuard)
+    @Put('update-password')
+    async updatePassword(@Req() request, @Body() body: { email: string, password: string }) {
+      const idFromToken = request.user.user_id;  
+        const { email, password } = body;
+        if (!email || !password) {
+            return {
+                message: 'Email and new password are required'
+            }
+        }
+        const response = await this.authService.updatePassword(idFromToken, body);
+        return {
+            message: response
+        }
+
+    }   
+
+    @Public()
+    @Post('request-password-reset')
+    async requestPasswordReset(@Body() body: { email: string }) {
+        const { email } = body;
+        if (!email) {
+            return {
+                message: 'Email is required'
+            }
+        }
+        const response = await this.authService.requestPasswordReset(email);
+        return {
+            message: response.message
+        }
+    }
+    
+    @Public()   
+    @Put('password-reset')
+    async passwordForgotten(@Body() body: { email: string, otp: string, password: string }) {
+        const { email, otp, password } = body;
+        if (!email || !otp || !password) {
+            return {
+                message: 'Email, OTP and new password are required'
+            }
+        }
+        const response = await this.authService.passwordForgotten(email, otp, password);
+        if (response && response.message) { 
+        return {
+            message: response.message
+        }
+
+
+
+    }
+}
+    @UseGuards(JwtAuthGuard)
+    @Post('logout')
+    @HttpCode(200) 
+    async logout(@Req() request ) {
+        const userFromToken = request.user;
+        console.log('User from token:', userFromToken);
+        if (!userFromToken) {
             return {
                 message: 'Token is required'
             }
         }
-        const user = await this.authService.logout(body.token);
+        const user = await this.authService.logout(userFromToken)
+        
         if (!user) {
             return {
                 message: 'Invalid token'
             }
         }
+        return {
+            message: 'User logged out successfully'
+        }
     }
+    
     
     //**SALON AREA */
 

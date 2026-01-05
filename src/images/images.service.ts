@@ -1,5 +1,5 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
-import { File as MulterFile } from 'multer';
+import { Injectable, BadRequestException, StreamableFile } from '@nestjs/common';
+// import { File as MulterFile } from 'multer';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Salon } from 'src/models/salon.model';
@@ -12,7 +12,7 @@ export class ImagesService {
   async uploadImageforService(
     id: string,
     folder: string,
-    images: MulterFile[],
+    images: Express.Multer.File[], 
   ): Promise<{ message: string; paths: string[] }> {
     console.log('Uploading images for service:', id, folder);
 
@@ -90,20 +90,36 @@ export class ImagesService {
 
   
 
-  async retriveImage(folder: string, id: string): Promise<object> {
-    if (!id || !folder) throw new BadRequestException('No folder or id provided');
-
-    const folderPath = path.join(this.bucketPath, folder, id);
-
-    if (!fs.existsSync(folderPath)) throw new BadRequestException('Folder does not exist');
-
-    const files = fs.readdirSync(folderPath);
-
-    const urls = files.map((file) => `/bucket/${folder}/${id}/${file}`);
-
-    return { urls };
+  async retriveImages(folder: string, id: string): Promise<{ urls: string[] }> {
+  if (!id || !folder) {
+    // Retourner un objet vide si les paramètres sont manquants
+    return { urls: [] };
   }
 
+  const folderPath = path.join(this.bucketPath, folder, id);
+
+  if (!fs.existsSync(folderPath)) {
+    // Retourner un objet vide si le dossier n'existe pas
+    return { urls: [] };
+  }
+
+  const files = fs.readdirSync(folderPath);
+
+  const urls = files.map((file) => `/bucket/${folder}/${id}/${file}`);
+
+  return { urls };
+}
+
+ async retrieveImageByName(folder: string, id: string, fileName: string): Promise<StreamableFile> {
+    if (!id || !folder || !fileName) throw new BadRequestException('Missing folder, id or fileName');
+
+    const filePath = path.join(this.bucketPath, folder, id, fileName);
+    console.log('File path:', filePath);
+    if (!fs.existsSync(filePath)) throw new BadRequestException('Image not found');
+
+    const fileStream = fs.createReadStream(filePath);
+    return new StreamableFile(fileStream);
+  }
 
 }
 
@@ -124,3 +140,4 @@ export class ImagesService {
 //         return uploadResults;
 //     }
 // }
+
