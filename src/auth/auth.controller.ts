@@ -1,173 +1,136 @@
-import { Body, Controller,  HttpCode,  Post, Put, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { logoutDto, SignInDto, SignUpDto, SO_SignUpDto } from './dto/sign.user.dto';
+import {
+  logoutDto,
+  SignInOwnerDto,
+  SignOwnerUpDto,
+  SO_SignUpDto,
+  updatePasswordDto,
+} from './dto/sign.user.dto';
 import { Public } from 'src/common/decorators/public.decorators';
 import { JwtAuthGuard } from 'src/common/guards/jwt.guards';
+import { Throttle } from '@nestjs/throttler';
+import { ApiTags } from '@nestjs/swagger';
 
+@ApiTags('Auth')
 @Controller('auth')
+@Throttle({ default: { limit: 5, ttl: 60000 } })
 export class AuthController {
-    constructor(private readonly authService: AuthService) {}
-    
-    @Post('/signin')
+  constructor(private readonly authService: AuthService) {}
+
+  @Post('/owner/signin')
+  @Public()
+  async signup(@Body() body: SignInOwnerDto) {
+    const { phone, password } = body;
+    if (!phone || !password) {
+      return { message: 'PHONE_PASSWORD_REQUIRED' };
+    }
+    const user = await this.authService.validateUser(phone, password);
+    if (!user) {
+      return { message: 'PHONE_OR_PASSWORD_INVALID' };
+    }
+    return this.authService.login(user);
+  }
+
+  @Post('owner/signup')
+  @Public()
+  async register(@Body() body: SignOwnerUpDto) {
+    const { email, phone, password, fullname } = body;
+    if (!email || !phone || !password || !fullname) {
+      return { message: 'ALL_FIELDS_REQUIRED' };
+    }
+    return this.authService.register(body);
+  }
+
+  @Post('owner/verify-email')
+  @Public()
+  async consentTerms(@Body() body: { email: string; otp: string }) {
+    const { email, otp } = body;
+    const response = await this.authService.verifyEmail(email, otp);
+    return response;
+  }
+
+    @Post('owner/verify-phone')
     @Public()
+    async verifyPhone(@Body() body: { phone: string; otp: string }) {
+      const { phone, otp } = body;
+      console.log('phone and otp', phone, otp);
 
-    async signup(@Body() body: SignInDto ) {
-        const { email, password } = body;
-        if (!email || !password) {
-            return {
-                message: 'Email and password are required'
-            }
-        }
-        const user = await this.authService.validateUser(email, password);
-        if (!user) {
-            return {
-                message: 'Invalid email or password'
-            }
-        }
-        const ExistingUser =await this.authService.login(user);
-        if (ExistingUser) {
-            return {
-                access_token: ExistingUser.access_token,
-            }
-        }  
-     
+      return {
+        message: 'PHONE_VERIFICATION_NOT_IMPLEMENTED',
+      };
     }
 
- @Post('signup')
- @Public()
-    async register(@Body() body: SignUpDto) {
-        const { email, password, name , role } = body;
-        if (!email || !password || !name || !role) {
-            return {
-                message: 'all columns are required'
-            }
-        }
-        const user = await this.authService.register(body);
-        if (!user) {
-            return {
-                message: 'User already exists'
-            }
-        }
-        return {
-            message: 'User created successfully',
-            user
-        }
+  @Post('owner/request-verify-email')
+  @Public()
+  async sendNewOtp(@Body() body: { email: string }) {
+    const { email } = body;
+    if (!email) {
+      return { message: 'EMAIL_REQUIRED' };
     }
-
-     @Post('consent-to-terms') 
-     @Public()
-        async consentTerms(@Body() body: { email: string, otp: string }) {
-            const { email, otp } = body;
-            if (!email || !otp) {
-                return {
-                    message: 'Email and OTP are required'
-                }
-            }
-            const response = await this.authService.consentToTerms(email, otp);
-            return {
-                message: response
-            }
-        }
+    return this.authService.sendOTPthroughMail(email);
+  }
 
 
-
-    @UseGuards(JwtAuthGuard)
-    @Put('update-password')
-    async updatePassword(@Req() request, @Body() body: { email: string, password: string }) {
-      const idFromToken = request.user.user_id;  
-        const { email, password } = body;
-        if (!email || !password) {
-            return {
-                message: 'Email and new password are required'
-            }
-        }
-        const response = await this.authService.updatePassword(idFromToken, body);
-        return {
-            message: response
-        }
-
-    }   
-
-    @Public()
-    @Post('request-password-reset')
-    async requestPasswordReset(@Body() body: { email: string }) {
-        const { email } = body;
-        if (!email) {
-            return {
-                message: 'Email is required'
-            }
-        }
-        const response = await this.authService.requestPasswordReset(email);
-        return {
-            message: response.message
-        }
+   @Post('owner/request-verify-phone')
+  @Public()
+  async sendNewOtpBySMPP(@Body() body: { phone: string }) {
+    const { phone } = body;
+    if (!phone) {
+      return { message: 'PHONE_REQUIRED' };
     }
-    
-    @Public()   
-    @Put('password-reset')
-    async passwordForgotten(@Body() body: { email: string, otp: string, password: string }) {
-        const { email, otp, password } = body;
-        if (!email || !otp || !password) {
-            return {
-                message: 'Email, OTP and new password are required'
-            }
-        }
-        const response = await this.authService.passwordForgotten(email, otp, password);
-        if (response && response.message) { 
-        return {
-            message: response.message
-        }
+    return this.authService.sendOTPthroughPhone(phone);
+  }
 
 
+  @UseGuards(JwtAuthGuard)
+  @Put('owner/update-password')
+  async updatePassword(@Req() request, @Body() body: updatePasswordDto) {
+    const idFromToken = request.user.user_id;
+    return this.authService.updatePassword(idFromToken, body);
+  }
 
+  @Public()
+  @Post('owner/request-password-reset')
+  async requestPasswordReset(@Body() body: { email: string }) {
+    const { email } = body;
+    if (!email) {
+      return { message: 'EMAIL_REQUIRED' };
     }
+    return this.authService.requestPasswordReset(email);
+  }
+
+  @Public()
+  @Put('owner/password-reset')
+  async passwordForgotten(
+    @Body() body: { email: string; otp: string; password: string },
+  ) {
+    const { email, otp, password } = body;
+    if (!email || !otp || !password) {
+      return { message: 'EMAIL_OTP_PASSWORD_REQUIRED' };
+    }
+    return this.authService.passwordForgotten(email, otp, password);
+  }
+  @UseGuards(JwtAuthGuard)
+  @Post('owner/logout')
+  @HttpCode(200)
+  async logout(@Req() request) {
+    const userFromToken = request.user;
+    if (!userFromToken) {
+      return { message: 'TOKEN_REQUIRED' };
+    }
+    await this.authService.logout(userFromToken);
+    return { message: 'LOGOUT_SUCCESS' };
+  }
+
+  
 }
-    @UseGuards(JwtAuthGuard)
-    @Post('logout')
-    @HttpCode(200) 
-    async logout(@Req() request ) {
-        const userFromToken = request.user;
-        console.log('User from token:', userFromToken);
-        if (!userFromToken) {
-            return {
-                message: 'Token is required'
-            }
-        }
-        const user = await this.authService.logout(userFromToken)
-        
-        if (!user) {
-            return {
-                message: 'Invalid token'
-            }
-        }
-        return {
-            message: 'User logged out successfully'
-        }
-    }
-    
-    
-    //**SALON AREA */
-
-    @Post('so/signup')
-    @Public()
-    async salonOwnerRegister(@Body() body: SO_SignUpDto) {
-        if (!body) {
-            return {
-                message: 'all columns are required'
-            }
-        }
-        const response = await this.authService.registerforSalonOwner(body);
-        return {
-            response
-    }
-}
-   
-
-
-   
-
-
-   
-}
-
- 

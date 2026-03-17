@@ -1,0 +1,137 @@
+// Zawadji — https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  OWNER
+  CLIENT
+  ADMIN
+}
+
+enum HallType {
+  PLEIN_AIR
+  SALLE
+  VILLA
+  TERRASSE
+}
+
+model User {
+  id                Int       @id @default(autoincrement())
+  fullName          String    @db.VarChar(150)
+  email             String    @unique @db.VarChar(255)
+  phone             String?   @unique @db.VarChar(20)
+  password          String
+  role              Role      @default(OWNER)
+  emailVerified     Boolean   @default(false)
+  phoneVerified     Boolean   @default(false)
+  emailVerifiedAt   DateTime?
+  phoneVerifiedAt   DateTime?
+  avatarKey         String?
+  otp               String?
+  otpExpiresAt      DateTime?
+  isActive          Boolean   @default(true)
+  lastLoginAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  halls             Hall[]
+  refreshTokens     RefreshToken[]
+
+  @@map("users")
+}
+
+model Hall {
+  id          Int      @id @default(autoincrement())
+  ownerId     Int
+  owner       User     @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  name        String   @db.VarChar(150)
+  slug        String?  @unique @db.VarChar(170)
+  description String?
+  wilaya      String?  @db.VarChar(100)
+  commune     String?  @db.VarChar(100)
+  address     String?
+  capacity    Int?
+  type        HallType
+
+  priceDay          Decimal?  @db.Decimal(10, 2)
+  intervalDayFrom   DateTime? @db.Time
+  intervalDayTo     DateTime? @db.Time
+
+  priceEvening          Decimal?  @db.Decimal(10, 2)
+  intervalEveningFrom   DateTime? @db.Time
+  intervalEveningTo     DateTime? @db.Time
+
+  latitude    Decimal? @db.Decimal(10, 8)
+  longitude   Decimal? @db.Decimal(11, 8)
+
+  hallServices  Json      @default("[]")
+  mediaFolder   String?   @db.VarChar(255)
+  isPublished   Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  viewsCount    Int       @default(0)
+  ratingAvg     Decimal   @default(0) @db.Decimal(3, 2)
+  ratingCount   Int       @default(0)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  images        HallImage[]
+
+  @@index([ownerId])
+  @@index([wilaya])
+  @@index([latitude, longitude])
+  @@map("halls")
+}
+
+model HallImage {
+  id        Int      @id @default(autoincrement())
+  hallId    Int
+  hall      Hall     @relation(fields: [hallId], references: [id], onDelete: Cascade)
+  key       String
+  url       String?
+  isCover   Boolean  @default(false)
+  position  Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([hallId])
+  @@map("hall_images")
+}
+
+model RefreshToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique @db.VarChar(512)
+  expiresAt DateTime
+  revoked   Boolean   @default(false)
+  revokedAt DateTime?
+  userAgent String?
+  ipAddress String?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@map("refresh_token")
+}
+
+// Catalog of service types (e.g. Parking, Catering) that halls can offer
+model HallServiceType {
+  id   Int     @id @default(autoincrement())
+  name String  @unique @db.VarChar(100)
+  slug String? @unique @db.VarChar(100)
+  @@map("hall_services")
+}
+
+model Codes {
+  id   Int     @id @default(autoincrement())
+  code String  @unique @db.VarChar(100)
+  value String  @db.VarChar(100)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  @@map("codes")
+}
+        

@@ -1,11 +1,11 @@
 import { IsEmail, IsNotEmpty, IsNumber, IsOptional, IsString } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class SignInDto {
-  @ApiProperty({ example: 'user@example.com' })
-  @IsEmail()
+export class SignInOwnerDto {
+  @ApiProperty({ example: '66362009' })
+  @IsString()
   @IsNotEmpty()
-  email: string;
+  phone: string;
 
   @ApiProperty({ example: 'strongPassword123' })
   @IsString()
@@ -13,26 +13,30 @@ export class SignInDto {
   password: string;
 }
 
-export class SignUpDto {
+
+// OWNER SCOPE
+
+export class SignOwnerUpDto {
   @ApiProperty({ example: 'John Doe' })
   @IsNotEmpty()
   @IsString()
-  name: string;
+  fullname: string;
 
   @ApiProperty({ example: 'user@example.com' })
   @IsEmail()
   @IsNotEmpty()
   email: string;
 
+   @ApiProperty({ example: '6623269852' })
+  @IsString()
+  @IsNotEmpty()
+  phone: string;
+
   @ApiProperty({ example: 'strongPassword123' })
   @IsString()
   @IsNotEmpty()
   password: string;
 
-  @ApiProperty({ example: 'customer' })
-  @IsString()
-  @IsNotEmpty()
-  role: string;
 }
 
 export class logoutDto {
@@ -44,9 +48,15 @@ export class logoutDto {
 
 export class updatePasswordDto {
   @ApiProperty({ example: 'user@example.com' })
-  @IsNotEmpty()
   @IsEmail()
+  @IsOptional()
   email: string;
+
+  @ApiProperty({ example: '660000000' })
+  @IsString()
+  @IsOptional()
+  phone: string;
+
 
   @ApiProperty({ example: 'newPassword123' })
   @IsNotEmpty()

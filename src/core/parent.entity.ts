@@ -80,7 +80,7 @@ export class Core {
         [id]
       );
   
-      return response.rowCount > 0;
+      return response.rowCount ? response.rowCount > 0 : false;
     } catch (error) {
       console.error(JSON.stringify(error), "erreur");
       throw error;

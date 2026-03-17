@@ -1,13 +1,13 @@
-type Salon = {
+type HallWithCoords = {
   id: number;
   name: string;
-  latitude: number;
-  longitude: number;
+  latitude?: unknown;
+  longitude?: unknown;
 };
 
 export class GPS {
   static getDistanceFromLatLonInKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-    const R = 6371; // Earth radius in km
+    const R = 6371;
     const dLat = this.deg2rad(lat2 - lat1);
     const dLon = this.deg2rad(lon2 - lon1);
     const a =
@@ -23,24 +23,26 @@ export class GPS {
   }
 }
 
-/**
- * Find salons within the radius defined by the user
- * @param userLat - user latitude
- * @param userLng - user longitude
- * @param radiusInKm - user chosen radius (in km)
- * @param salons - list of all salons
- * @returns array of salons within radius
- */
-export function findNearbySalons(
+function parseCoord(coord: number | string | null | undefined): number | null {
+  if (coord === null || coord === undefined) return null;
+  const str = String(coord).trim().replace(',', '.');
+  const num = Number(str);
+  return isNaN(num) ? null : num;
+}
+
+export function findNearbyHalls<T extends HallWithCoords>(
   userLat: number,
   userLng: number,
   radiusInKm: number,
-  salons: Salon[]
-): Salon[] {
-  return salons.filter((salon) => {
-    const distance = GPS.getDistanceFromLatLonInKm(userLat, userLng, salon.latitude, salon.longitude);
-    console.log('distancex', distance);
-    console.log('radiusInKm', radiusInKm);
+  halls: T[],
+): T[] {
+  return halls.filter((hall) => {
+    const hallLat = parseCoord(hall.latitude as number | string);
+    const hallLng = parseCoord(hall.longitude as number | string);
+    if (hallLat === null || hallLng === null) {
+      return false;
+    }
+    const distance = GPS.getDistanceFromLatLonInKm(userLat, userLng, hallLat, hallLng);
     return distance <= radiusInKm;
   });
 }

@@ -1,7 +1,6 @@
 import { Injectable, CanActivate, ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorators';
-import { Roles } from '../decorators/roles.decorators';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
@@ -14,18 +13,20 @@ export class RolesGuard implements CanActivate {
     ]);
     if (isPublic) return true;
 
-    const roles = this.reflector.get<string[]>(Roles, context.getHandler());
+    const roles = this.reflector.get<string[]>('roles', context.getHandler());
     if (!roles || roles.length === 0) return true;
 
     const request = context.switchToHttp().getRequest();
     const user = request.user; // should already be set by JwtAuthGuard
 
     if (!user) {
-      throw new ForbiddenException('User not found on request (JWT missing or invalid)');
+      throw new ForbiddenException('USER_NOT_AUTHENTICATED');
     }
 
-    if (!roles.includes(user.role)) {
-      throw new ForbiddenException('Access denied for your role');
+    const userRole = String(user.role ?? '').toUpperCase();
+    const allowedRoles = roles.map((r) => String(r).toUpperCase());
+    if (!allowedRoles.includes(userRole)) {
+      throw new ForbiddenException('ROLE_FORBIDDEN');
     }
 
     return true;

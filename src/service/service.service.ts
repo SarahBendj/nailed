@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { Service  } from 'src/models/service.model';
 import { CreateServiceDto, serviceGpsDto, UpdateServiceDto } from './dto/create.service';
-import { findNearbySalons } from 'utility/GPS';
+import { findNearbyHalls } from 'utility/GPS';
 
 @Injectable()
 export class ServiceService {
@@ -49,7 +49,7 @@ export class ServiceService {
             return services;
         }
 
-        return findNearbySalons(
+        return findNearbyHalls(
             data.latitude,
             data.longitude,
             Number(data.distance),

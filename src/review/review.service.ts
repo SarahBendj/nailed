@@ -2,7 +2,7 @@ import { BadGatewayException, BadRequestException, Injectable } from '@nestjs/co
 import { Review } from 'src/models/review.model';
 import { CreateReviewDto } from './dto/review.dto';
 import { averageRate } from './utils/rating.calculate';
-import { Salon } from 'src/models/salon.model';
+import { Hall } from 'src/models/hall.model';
 
 @Injectable()
 export class ReviewService {
@@ -36,7 +36,7 @@ export class ReviewService {
 
     if (ratings.length > 0) {
         const avg = averageRate(ratings);
-        await Salon.Update(data.salon_id, { rating: Number(avg) });
+        await Hall.Update(data.salon_id, { rating: Number(avg) });
     }
 
     return savedReview;

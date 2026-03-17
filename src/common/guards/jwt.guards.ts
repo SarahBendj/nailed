@@ -1,5 +1,10 @@
 // src/common/guards/jwt-auth.guard.ts
-import { Injectable, CanActivate, ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { Reflector } from '@nestjs/core';
 import { IS_PUBLIC_KEY } from '../decorators/public.decorators';
@@ -17,23 +22,29 @@ export class JwtAuthGuard implements CanActivate {
       context.getHandler(),
       context.getClass(),
     ]);
-    if (isPublic) return true;
-
-    const request = context.switchToHttp().getRequest();
-    const authHeader = request.headers['authorization'];
-
-    if (!authHeader) {
-      throw new UnauthorizedException('Access token is required');
+    if (isPublic) {
+      return true;
     }
 
-    const token = authHeader.split(' ')[1];
-    console.log('Token:', token);
+    const request = context.switchToHttp().getRequest();
+    const authHeader: string | undefined =
+      request.headers?.authorization ?? request.headers?.Authorization;
+
+    if (!authHeader || typeof authHeader !== 'string') {
+      throw new UnauthorizedException('TOKEN_REQUIRED');
+    }
+
+    const [scheme, token] = authHeader.split(' ');
+    if (scheme !== 'Bearer' || !token) {
+      throw new UnauthorizedException('TOKEN_REQUIRED');
+    }
+
     try {
       const decoded = this.jwtService.verify(token);
-      request.user = decoded; 
+      request.user = decoded;
       return true;
     } catch (err) {
-      throw new UnauthorizedException('Invalid or expired token');
+      throw new UnauthorizedException('TOKEN_INVALID_OR_EXPIRED');
     }
   }
 }

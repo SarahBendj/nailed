@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { JwtModule } from '@nestjs/jwt';
-import { NewUserMailing } from 'utility/mailing/newUser.client';
-import { PasswordResetMailing } from 'utility/mailing/resetPassword';
+import {  UserMailingService } from 'utility/mailing/templates/client/newUser.client';
+import { PasswordResetMailing } from 'utility/mailing/templates/owner/resetPassword.mailing';
 import { RedisModule } from 'src/database/cache';
 
 
@@ -16,7 +16,7 @@ import { RedisModule } from 'src/database/cache';
     RedisModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService , NewUserMailing , PasswordResetMailing],
+  providers: [AuthService , UserMailingService , PasswordResetMailing],
   exports: [AuthService ,JwtModule],
 })
 export class AuthModule {}

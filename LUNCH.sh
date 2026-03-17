@@ -6,4 +6,7 @@ sudo service postgresql start
 
 # lancer le projet
 
-npm run start
+npm run start:dev
+
+#Lancer NGROCK
+# ngrok http 3000
